@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crea Yoyis · Planner de Contenido</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --salmon:#FFA180;--sl:#FFF0EB;--sd:#993C1D;
+  --yellow:#FFE79A;--yl:#FFFAE8;--yd:#8A6C00;
+  --blue:#A5EEF2;--bl:#EBF9FA;--bd:#0F6070;
+  --green:#CFEEB3;--gl:#F0FAE5;--gd:#2D6010;
+  --bg:#F5F3F0;--white:#FFFFFF;--border:#E0DDD8;--border2:#C5C2BC;
+  --text:#1A1A1A;--text2:#555;--text3:#999;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+
+.hdr{background:var(--white);border-bottom:2px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:14px;height:56px;position:sticky;top:0;z-index:200}
+.logo{font-size:19px;font-weight:800;letter-spacing:-0.5px}.logo b{color:var(--sd)}
+.tag{background:var(--gl);color:var(--gd);padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600}
+
+.layout{display:grid;grid-template-columns:1fr 430px;min-height:calc(100vh - 56px)}
+
+.cal-side{padding:20px 24px;overflow-y:auto}
+.cal-side h2{font-size:15px;font-weight:700;margin-bottom:3px}
+.hint{font-size:12px;color:var(--text3);margin-bottom:14px}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.lchip{display:flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.cal{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden}
+.cal-hd{display:grid;grid-template-columns:repeat(7,1fr);background:#EEEBE6}
+.cal-hd div{padding:8px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--text3);border-right:1px solid var(--border);text-transform:uppercase;letter-spacing:.5px}
+.cal-hd div:last-child{border-right:none}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cell{min-height:95px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px;background:var(--white);cursor:default;transition:background .12s}
+.cell:nth-child(7n){border-right:none}
+.cell.ok{cursor:pointer}.cell.ok:hover{background:#FAFAF8}
+.cell.active{background:#FFF5F2!important;outline:2px inset var(--salmon)}
+.cell.rest{background:#FAFAF8;opacity:.55}
+.cell.emp{background:#FAFAF8}
+.dn{font-size:12px;font-weight:700;color:var(--text3);text-align:right;margin-bottom:5px}
+.cchip{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;margin-bottom:3px;text-transform:uppercase}
+.ctxt{font-size:10px;color:var(--text2);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gd);margin-left:3px;vertical-align:middle}
+
+.det-side{background:var(--white);border-left:1px solid var(--border);display:flex;flex-direction:column;height:calc(100vh - 56px);position:sticky;top:56px;overflow:hidden}
+.det-ph{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);gap:10px;padding:24px;text-align:center}
+.det-ph i{font-size:36px;opacity:.25}
+.det-ph p{font-size:13px}
+.det-main{flex:1;overflow-y:auto;display:none;flex-direction:column}
+.det-main.show{display:flex}
+
+.dh{padding:14px 18px 10px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;position:relative}
+.dh-close{position:absolute;top:12px;right:14px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:3px 7px;border-radius:6px}
+.dh-close:hover{background:var(--border);color:var(--text)}
+.dh h2{font-size:14px;font-weight:700;margin:5px 0 2px;padding-right:28px;line-height:1.35}
+.dh-date{font-size:11px;color:var(--text3)}
+
+.db{padding:14px 18px;flex:1}
+.sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin:14px 0 7px;display:flex;align-items:center;gap:5px}
+.sl:first-child{margin-top:0}
+
+.caption-box{background:var(--bg);border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--text2);position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;background:var(--white);border:1px solid var(--border2);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;color:var(--text2)}
+.copy-btn:hover{background:var(--bg)}
+.hashtags{margin-top:9px;color:var(--bd);font-size:11px;font-weight:500;line-height:1.6}
+
+.clip{display:flex;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+.clip:last-child{border-bottom:none;padding-bottom:0}
+.clip-n{width:26px;height:26px;min-width:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px}
+.clip-cam{background:var(--salmon);color:white}
+.clip-voz{background:var(--sd);color:white}
+.clip-broll{background:#888;color:white}
+.clip-body{flex:1}
+.clip-tp{font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.clip-vis{font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.45;background:var(--bg);padding:6px 9px;border-radius:6px}
+.clip-vis-lbl{font-size:10px;font-weight:700;color:var(--text3);margin-bottom:2px;text-transform:uppercase}
+.clip-quote{font-size:12px;background:var(--sl);border-left:3px solid var(--salmon);padding:7px 11px;border-radius:0 7px 7px 0;color:var(--sd);line-height:1.55}
+.clip-quote-lbl{font-size:10px;font-weight:700;color:var(--sd);opacity:.7;margin-bottom:3px;text-transform:uppercase}
+
+.slide{display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.4;align-items:flex-start}
+.slide:last-child{border-bottom:none}
+.slide-n{font-size:10px;font-weight:700;color:var(--text3);flex-shrink:0;padding-top:1px;min-width:50px}
+.slide-tp{font-size:10px;color:var(--yd);font-weight:600;flex-shrink:0;width:68px;padding-top:1px}
+.slide-tx{color:var(--text2);line-height:1.45}
+
+.hist{background:var(--bl);border-left:3px solid var(--bd);padding:8px 11px;border-radius:0 8px 8px 0;margin-bottom:7px}
+.hist:last-child{margin-bottom:0}
+.hist-tp{font-size:10px;font-weight:700;color:var(--bd);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+.hist-tx{font-size:12px;color:var(--text2);line-height:1.45}
+.hist-cta{font-size:11px;color:var(--text3);margin-top:4px;display:flex;align-items:center;gap:4px}
+
+.obj-box{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.5}
+.obj-style{font-size:11px;color:var(--sd);margin-top:6px;display:flex;align-items:flex-start;gap:5px;line-height:1.4;background:var(--sl);border-radius:6px;padding:6px 8px}
+
+.rec-sec{border-top:1px solid var(--border);padding:12px 18px 14px;background:#FFFDF9;flex-shrink:0}
+.rec-sec label{font-size:12px;font-weight:700;display:block;margin-bottom:4px}
+.rec-hint{font-size:11px;color:var(--text3);margin-bottom:6px}
+.rec-sec textarea{width:100%;border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;height:72px;resize:vertical;color:var(--text)}
+.rec-sec textarea:focus{outline:none;border-color:var(--salmon)}
+.btn-row{display:flex;gap:7px;margin-top:7px}
+.btn-save{background:var(--salmon);color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-save:hover{opacity:.88}
+.btn-cl{background:var(--bg);color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer}
+
+.bot{background:var(--white);border-top:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;bottom:0;z-index:100;grid-column:1/-1}
+.rc{font-size:13px;color:var(--text2)}.rc strong{color:var(--text)}
+.btn-gen{background:var(--sd);color:white;border:none;border-radius:24px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px}
+.btn-gen:hover:not(:disabled){opacity:.88}
+.btn-gen:disabled{background:#C5C2BC;cursor:not-allowed}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:14px;width:92%;max-width:540px;max-height:82vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.mh{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.mh h3{font-size:15px;font-weight:700}
+.mb{padding:16px 20px}
+.mb p{font-size:13px;color:var(--text2);margin-bottom:12px}
+.ch-item{background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--salmon)}
+.ch-date{font-size:10px;font-weight:700;color:var(--text3);margin-bottom:3px}
+.ch-txt{font-size:13px}
+.mf{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.btn-copy{background:var(--gl);color:var(--gd);border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-dis{background:var(--bg);color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer}
+
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr}
+  .det-side{position:fixed;right:0;top:56px;bottom:50px;width:100%;max-width:430px;transform:translateX(100%);transition:transform .25s;z-index:150;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
+  .det-side.open{transform:translateX(0)}
+  .cell{min-height:72px}.ctxt{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">Crea <b>Yoyis</b></div>
+  <div class="tag">Jun 29 – Jul 22 · 2026</div>
+</div>
+
+<div class="layout">
+
+  <div class="cal-side">
+    <h2>Plan de contenido mensual</h2>
+    <p class="hint">Haz clic en cualquier día para ver el guión completo, caption, hashtags e historias</p>
+    <div class="legend">
+      <div class="lchip" style="background:var(--sl);color:var(--sd)"><i class="fa-solid fa-film"></i> Reel</div>
+      <div class="lchip" style="background:var(--yl);color:var(--yd)"><i class="fa-solid fa-layer-group"></i> Carrusel</div>
+      <div class="lchip" style="background:var(--bl);color:var(--bd)"><i class="fa-solid fa-clock"></i> Historias</div>
+      <div class="lchip" style="background:var(--gl);color:var(--gd)"><i class="fa-solid fa-book-open"></i> Reel Educativo</div>
+    </div>
+    <div class="cal">
+      <div class="cal-hd">
+        <div>Lunes</div><div>Martes</div><div>Miércoles</div><div>Jueves</div><div>Viernes</div><div>Sábado</div><div>Domingo</div>
+      </div>
+      <div class="cal-grid" id="grid"></div>
+    </div>
+  </div>
+
+  <div class="det-side" id="det-side">
+    <div class="det-ph" id="ph">
+      <i class="fa-regular fa-hand-pointer"></i>
+      <p>Haz clic en un día<br>para ver el contenido completo</p>
+    </div>
+    <div class="det-main" id="det-main">
+      <div class="dh" id="dh">
+        <button class="dh-close" onclick="closeDet()"><i class="fa-solid fa-xmark"></i></button>
+        <div id="dh-chip"></div>
+        <h2 id="dh-title"></h2>
+        <div class="dh-date" id="dh-date"></div>
+      </div>
+      <div class="db" id="db"></div>
+      <div class="rec-sec">
+        <label><i class="fa-solid fa-pencil"></i> Recomendaciones de cambio</label>
+        <p class="rec-hint">Escribe aquí qué quieres modificar tras hablar con tu cliente:</p>
+        <textarea id="rta" placeholder="Ej: Cambiar Ref 6169 por Ref 1200. Clip 3 más energético. Añadir mención envío gratis..."></textarea>
+        <div class="btn-row">
+          <button class="btn-save" onclick="saveRec()" id="sbtn"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+          <button class="btn-cl" onclick="closeDet()"><i class="fa-solid fa-xmark"></i> Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bot">
+  <span class="rc"><strong id="rc">0</strong> cambios guardados</span>
+  <button class="btn-gen" id="gbtn" disabled onclick="openModal()"><i class="fa-solid fa-wand-magic-sparkles"></i> Ver resumen de cambios</button>
+</div>
+
+<div class="modal-bg" id="mbg">
+  <div class="modal">
+    <div class="mh"><h3><i class="fa-solid fa-list-check"></i> Cambios a aplicar</h3><button class="btn-dis" onclick="closeModal()">✕</button></div>
+    <div class="mb">
+      <p>Copia este texto y pégalo en Claude para que aplique todos los cambios automáticamente:</p>
+      <div id="mch"></div>
+    </div>
+    <div class="mf">
+      <button class="btn-copy" onclick="copyAll()" id="cpbtn"><i class="fa-solid fa-copy"></i> Copiar todo</button>
+      <button class="btn-dis" onclick="closeModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const REC={};
+let cur=null;
+
+const C={
+'06-29':{
+  t:'reel',lbl:'Reel #1',bg:'var(--sl)',tc:'var(--sd)',
+  title:'La historia de Crea Yoyis: ¿quiénes somos? 🐻',
+  obj:'Humanizar la marca — los dueños aparecen EN CÁMARA contando su historia y pasión por la ropa infantil.',
+  caption:`¿Sabías que Crea Yoyis nació del amor de unos papás por la ropa de bebé? 🐻
+
+Somos una familia que lleva años seleccionando las prendas más bonitas, suaves y especiales para los bebés de Colombia.
+
+Cada pedido que sale de aquí lleva nuestro corazón. 💕
+
+📦 Hacemos envíos a toda Colombia  ·  🛒 Catálogo → Link en bio`,
+  hashtags:'#CreaYoyis #HistoriaDeMarca #RopaInfantil #HechoColombia #BebeNiña #MamaColombia #FamiliaEmprendedora',
+  clips:[
+    {t:'cam',tp:'CLIP 1 — Dueño/a cámara frontal',
+     vis:'Mira directo a cámara. Luz natural, bodega organizada de fondo o espacio limpio de la tienda.',
+     quote:'Hola, soy [nombre]. Junto a mi familia creamos Crea Yoyis hace [X] años porque queríamos que los bebés de Colombia tuvieran la ropa más linda y especial del mercado.'},
+    {t:'broll',tp:'CLIP 2 — B-Roll bodega / taller',
+     vis:'Tomas de las instalaciones: prendas colgadas, cajas organizadas, manos seleccionando ropa. Sin audio directo — música de fondo suave.'},
+    {t:'cam',tp:'CLIP 3 — Dueño/a cámara frontal',
+     vis:'Misma posición que clip 1, tono cercano y cálido.',
+     quote:'Cada prenda que ves en nuestro catálogo pasa por nuestras manos. La revisamos, la tocamos, nos aseguramos de que sea suave, segura y bonita. Porque tu bebé lo merece.'},
+    {t:'broll',tp:'CLIP 4 — B-Roll productos',
+     vis:'Mostrar Ref 6169, Ref 1324, Ref 0309 con tomas lentas y detalladas. Primeros planos de telas, costuras y estampados. Buena luz natural o softbox.'},
+    {t:'cam',tp:'CLIP 5 — Dueño/a cámara + CTA',
+     vis:'Sonrisa sincera, mirada a cámara, tono final cálido y cercano.',
+     quote:'Escríbenos por WhatsApp, cuéntanos la edad de tu bebé y te armamos el pedido. ¡Somos Crea Yoyis y estamos aquí para ti! 🐻'},
+  ],
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 6169 + precio en texto grande',cta:'WhatsApp: "Lo quiero"'},
+    {tp:'💬 Interacción',tx:'Encuesta: ¿Tu bebé tiene cuántos meses? Opciones: 0-6 meses / 6-12 / 12-24',cta:'Sticker pregunta'},
+  ]
+},
+
+'06-30':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Martes 30 de junio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 1324 + precio destacado',cta:'WhatsApp: "Quiero este"'},
+    {tp:'📸 BTS',tx:'"Así organizamos el inventario 💼" — foto de bodega ordenada, manos trabajando',cta:'Sticker corazón'},
+  ]
+},
+
+'07-01':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Miércoles 1 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 0309 + precio',cta:'WhatsApp: "Lo quiero"'},
+    {tp:'💡 Tip educativo',tx:'"Tip: lava la ropa del bebé con jabón suave sin enjuague para proteger la piel sensible"',cta:'Sticker corazón'},
+  ]
+},
+
+'07-02':{
+  t:'car',lbl:'Carrusel #1',bg:'var(--yl)',tc:'var(--yd)',
+  title:'5 conjuntitos para tu niña 🎀',
+  obj:'Mostrar productos con precio — generar deseo de compra y comentarios.',
+  caption:`¿Cuál es tu favorito? 🎀 Comenta con el número y lo apartamos 😍
+
+Disponibles en nuestra tienda — escríbenos por WhatsApp o visita el link en bio 🛒
+Tallas desde los 0 meses`,
+  hashtags:'#CreaYoyis #RopaInfantil #OutfitBebes #ConjuntoBebe #NiñaFashion #ModaInfantilColombia',
+  slides:[
+    {n:'Slide 1',tp:'Portada','tx':'"5 conjuntos que tu bebé NECESITA 🎀" — fondo salmón, logo Crea Yoyis centrado'},
+    {n:'Slide 2',tp:'Look #1','tx':'Ref 6163 · $31.900 · Tallas 0-24m → Foto centrada, precio en texto grande'},
+    {n:'Slide 3',tp:'Look #2','tx':'Ref 6169 · $27.900 · Tallas 0-24m → Foto + detalle del diseño o estampado'},
+    {n:'Slide 4',tp:'Look #3','tx':'Ref 0312 · $25.800 · Tallas 0-24m → Foto + texto "¡precio especial!"'},
+    {n:'Slide 5',tp:'Look #4','tx':'Ref 1324 · $39.900 · Tallas 0-12m → Foto + descripción breve del conjunto'},
+    {n:'Slide 6',tp:'Look #5','tx':'Ref 6161 · $29.900 · Tallas 0-24m → Foto + "el favorito de nuestras clientas"'},
+    {n:'Slide 7',tp:'CTA final','tx':'"¿Te enamoraste de alguno? 💬 Comenta el número o escríbenos por WhatsApp" — ícono WP'},
+  ],
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 6163 + precio en texto grande',cta:'Botón WhatsApp'},
+    {tp:'💡 Tip',tx:'"Tip: la ropa de bebé ideal combina suavidad, lavado fácil y diseño bonito"',cta:'Sticker corazón'},
+  ]
+},
+
+'07-03':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Viernes 3 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 6163 + precio',cta:'Botón WhatsApp'},
+    {tp:'⚡ Urgencia',tx:'"Pedidos recibidos antes de las 2pm salen HOY 📦 — ¡escríbenos!"',cta:'WhatsApp directo'},
+  ]
+},
+
+'07-04':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Sábado 4 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto de conjunto + precio',cta:'Botón WhatsApp'},
+    {tp:'📸 BTS Dueños',tx:'"Esta mañana preparamos pedidos — gracias por confiar en Crea Yoyis 🐻"',cta:'Sticker 🐻'},
+  ]
+},
+
+'07-06':{
+  t:'reel',lbl:'Reel #2',bg:'var(--sl)',tc:'var(--sd)',
+  title:'Así preparamos tu pedido mayorista paso a paso 💼',
+  obj:'BTS del proceso de empaque — formato VOZ EN OFF sobre B-roll. Los dueños narran mientras la cámara muestra el proceso sin necesidad de aparecer en pantalla.',
+  style:'🎙 Este reel se graba en voz en off: el dueño/a narra el audio mientras graba el proceso con la cámara. No es necesario aparecer de frente.',
+  caption:`¿Quieres saber qué pasa desde que haces tu pedido hasta que llega a tu puerta? 💼
+
+Te mostramos cómo preparamos cada pedido mayorista con amor y cuidado. 📦
+
+✅ Pedido mínimo: $300.000
+✅ Tallas a tu elección
+✅ Despacho mismo día antes de las 2pm`,
+  hashtags:'#CreaYoyis #MayoristaRopaInfantil #ProcesoCreaYoyis #BTS #EmprendeColombia #RopaAlPorMayor',
+  clips:[
+    {t:'voz',tp:'CLIP 1 — 🎙 Voz en off / B-Roll bodega',
+     vis:'VISUAL: Toma panorámica de la bodega o mesa de trabajo con prendas organizadas.',
+     quote:'¿Alguna vez te preguntaste cómo preparamos tu pedido mayorista? Hoy te lo mostramos desde adentro.'},
+    {t:'voz',tp:'CLIP 2 — 🎙 Voz en off / B-Roll selección',
+     vis:'VISUAL: Manos seleccionando prendas por referencia y talla. Toma desde arriba (overhead shot).',
+     quote:'Primero seleccionamos cada prenda por referencia y talla, exactamente como lo pediste.'},
+    {t:'voz',tp:'CLIP 3 — 🎙 Voz en off / B-Roll revisión',
+     vis:'VISUAL: Primer plano de etiquetas, costuras y calidad de la tela. Manos revisando cada prenda.',
+     quote:'Revisamos la calidad de cada pieza antes de empacar. Solo enviamos lo que nosotros le pondríamos a nuestros hijos.'},
+    {t:'voz',tp:'CLIP 4 — 🎙 Voz en off / B-Roll empaque',
+     vis:'VISUAL: Prendas siendo dobladas cuidadosamente y puestas en caja con logo Crea Yoyis.',
+     quote:'Cada prenda se dobla con cuidado y se empaca en nuestra caja. Tu pedido siempre llega presentado.'},
+    {t:'voz',tp:'CLIP 5 — 🎙 Voz en off / CTA',
+     vis:'VISUAL: Caja sellada con sticker Crea Yoyis, lista para entrega al mensajero.',
+     quote:'Tu pedido sale con amor. Escríbenos por WhatsApp con el monto que quieres invertir y te armamos el pedido perfecto para tu negocio. 💼'},
+  ],
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 1333 · bebé 0-12m + precio',cta:'Botón WhatsApp'},
+    {tp:'💼 Mayorista',tx:'"Pedido mayorista desde $300.000 — empieza hoy tu negocio 💼"',cta:'Botón WP mayorista'},
+    {tp:'📸 BTS',tx:'"Esta mañana preparamos 15 pedidos — ¡gracias por confiar en Crea Yoyis! 🐻"',cta:'Sticker 🐻'},
+  ]
+},
+
+'07-07':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Martes 7 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 6169 + precio',cta:'WhatsApp: "Lo quiero"'},
+    {tp:'💡 Tip educativo',tx:'"Tip: la ropa 100% algodón es más cómoda y segura para la piel del bebé"',cta:'Sticker pregunta'},
+  ]
+},
+
+'07-08':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Miércoles 8 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 12207 · premium + precio',cta:'Botón WhatsApp'},
+    {tp:'📸 BTS Proceso',tx:'"Así elegimos las referencias del próximo catálogo Crea Yoyis 📋"',cta:'Sticker sorpresa'},
+  ]
+},
+
+'07-09':{
+  t:'car',lbl:'Carrusel #2',bg:'var(--yl)',tc:'var(--yd)',
+  title:'Guía para comprar al por mayor con Crea Yoyis 💼',
+  obj:'Educar sobre el programa mayorista y convertir emprendedoras en clientes.',
+  caption:`¿Quieres emprender o ya tienes tu tienda? 💼 Te explicamos paso a paso cómo funciona nuestro programa mayorista.
+
+Pedido mínimo: $300.000 — ¡y entras al mundo Crea Yoyis!
+📲 Escríbenos y empezamos hoy.`,
+  hashtags:'#CreaYoyis #MayoristaRopa #EmprendeColombia #RopaInfantilMayorista #EmprendedorasColombia',
+  slides:[
+    {n:'Slide 1',tp:'Portada','tx':'"¿Cómo comprar al por mayor con Crea Yoyis? 💼" — fondo verde menta, foto de los dueños'},
+    {n:'Slide 2',tp:'Paso 1','tx':'"💰 Monto mínimo de compra: $300.000" — ícono de billete, texto grande y claro'},
+    {n:'Slide 3',tp:'Paso 2','tx':'"👗 Elige tus prendas: surtidas por tallas o iguales por referencia — tú decides"'},
+    {n:'Slide 4',tp:'Paso 3','tx':'"📲 Envíanos por WhatsApp: referencia, cantidad, talla y color que necesitas"'},
+    {n:'Slide 5',tp:'Paso 4','tx':'"✅ Confirma tu cotización y realiza el pago — no apartamos sin pago previo"'},
+    {n:'Slide 6',tp:'Paso 5','tx':'"⚡ Pedidos cancelados antes de las 2pm salen el mismo día!"'},
+    {n:'Slide 7',tp:'Beneficio','tx':'"🎁 Envío GRATIS en pedidos sobre $1.500.000 a ciudades principales de Colombia"'},
+    {n:'Slide 8',tp:'CTA final','tx':'"¿Listo para tu primer pedido? Escríbenos ahora 📲" + ícono WhatsApp grande'},
+  ],
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 12207 · premium + precio',cta:'Botón WhatsApp'},
+    {tp:'📸 BTS Proceso',tx:'"Así elegimos las referencias del próximo catálogo 📋"',cta:'Sticker sorpresa'},
+  ]
+},
+
+'07-10':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Jueves 10 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 1333 + precio',cta:'Botón WhatsApp'},
+    {tp:'💼 Mayorista',tx:'"Últimos cupos de pedido mayorista esta quincena — ¡escríbenos! 💼"',cta:'Botón WP mayorista'},
+  ]
+},
+
+'07-11':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Viernes 11 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 6169 + precio',cta:'WhatsApp: "Lo quiero"'},
+    {tp:'💡 Tip',tx:'"Tip: compra siempre una talla más — los bebés crecen mucho más rápido de lo que crees"',cta:'Sticker bebé'},
+  ]
+},
+
+'07-13':{
+  t:'edu',lbl:'Reel #3 · Educativo',bg:'var(--gl)',tc:'var(--gd)',
+  title:'¿Qué tela es mejor para el bebé? Te lo explicamos 👶',
+  obj:'Reel educativo — formato VOZ EN OFF + tomas de telas y productos. Posiciona a Crea Yoyis como experta en calidad textil infantil.',
+  style:'🎙 Este reel se graba en voz en off: el dueño/a explica mientras la cámara muestra las telas, etiquetas y productos. No es necesario aparecer de frente en cámara.',
+  caption:`¿Sabías que la tela marca la diferencia entre ropa que irrita y ropa que cuida la piel de tu bebé? 👶
+
+En Crea Yoyis solo trabajamos con materiales que pasaron nuestra revisión de calidad. 💕
+
+💡 Guarda este video — te va a servir mucho 📌`,
+  hashtags:'#CreaYoyis #EducacionBebe #TipsMama #RopaCalidadBebe #CalidadTextil #MamaColombia #BebeNiña',
+  clips:[
+    {t:'voz',tp:'CLIP 1 — 🎙 Voz en off / B-Roll telas',
+     vis:'VISUAL: Primer plano de tela de algodón suave — prendas Crea Yoyis sobre superficie clara.',
+     quote:'Si estás comprando ropa para tu bebé, esto te va a interesar: no toda la ropa es igual y la tela es lo primero que debes revisar.'},
+    {t:'voz',tp:'CLIP 2 — 🎙 Voz en off / Comparación de telas',
+     vis:'VISUAL: Mostrar dos tipos de tela una al lado de la otra — algodón vs sintético. Manos tocando y comparando texturas.',
+     quote:'El algodón 100% es suave, transpira y no irrita la piel del bebé. Las telas sintéticas, en cambio, generan calor y rozadura.'},
+    {t:'voz',tp:'CLIP 3 — 🎙 Voz en off / Etiquetas',
+     vis:'VISUAL: Primer plano de las etiquetas internas de las prendas Crea Yoyis mostrando la composición del material.',
+     quote:'¿Cómo lo sabes? Mira siempre la etiqueta. Busca 100% algodón o mezclas con más del 80% algodón.'},
+    {t:'voz',tp:'CLIP 4 — 🎙 Voz en off / Texto en pantalla',
+     vis:'VISUAL: Prendas Crea Yoyis sobre superficie limpia. Texto animado superpuesto: "✅ Algodón 100%  |  ✅ Sin alérgenos  |  ✅ Lavado fácil  |  ✅ Revisado por nosotros"',
+     quote:'En Crea Yoyis revisamos cada referencia antes de ofrecértela. Calidad garantizada.'},
+    {t:'voz',tp:'CLIP 5 — 🎙 Voz en off / CTA',
+     vis:'VISUAL: Prendas empacadas en caja Crea Yoyis, sticker visible.',
+     quote:'¿Tienes dudas sobre qué referencia es mejor para la edad de tu bebé? Escríbenos por WhatsApp y te asesoramos gratis. 🐻'},
+  ],
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 12207 · premium + precio',cta:'Botón WhatsApp'},
+    {tp:'📸 BTS Educativo',tx:'"¿Sabes cómo revisamos la calidad de cada prenda antes de venderla? 👀"',cta:'Sticker sorpresa'},
+    {tp:'💡 Tip',tx:'"Algodón 100% = lo mejor para la piel sensible del bebé 💕"',cta:'Sticker corazón'},
+  ]
+},
+
+'07-14':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Martes 14 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 12207 · premium + precio',cta:'Botón WhatsApp'},
+    {tp:'📸 BTS Educativo',tx:'"¿Sabes cómo revisamos la calidad de cada prenda? 👀" — video corto del proceso',cta:'Sticker sorpresa'},
+    {tp:'💡 Tip',tx:'"Algodón 100% = lo mejor para la piel del bebé 💕"',cta:'Sticker corazón'},
+  ]
+},
+
+'07-15':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Miércoles 15 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 12204 · premium + precio',cta:'WhatsApp: "Lo quiero"'},
+    {tp:'📸 Dueños',tx:'"Hoy escogimos las referencias del próximo lanzamiento de Crea Yoyis 🎉"',cta:'Sticker corazón'},
+  ]
+},
+
+'07-16':{
+  t:'car',lbl:'Carrusel #3',bg:'var(--yl)',tc:'var(--yd)',
+  title:'5 cosas que debes saber antes de comprar ropa de bebé 👶',
+  obj:'Carrusel educativo — generar confianza y posicionar a Crea Yoyis como expertos en ropa infantil de calidad.',
+  caption:`Antes de comprar ropa para tu bebé, lee esto 👇
+
+Llevamos años en el mundo de la ropa infantil y estos 5 puntos hacen la diferencia. 💕
+
+Guarda este carrusel 📌  ·  Link en bio para ver el catálogo completo`,
+  hashtags:'#CreaYoyis #TipsBebes #RopaInfantil #GuíaCompraBebé #MamaPrimeriza #CalidadRopaBebe',
+  slides:[
+    {n:'Slide 1',tp:'Portada','tx':'"5 cosas que los papás deben saber antes de comprar ropa de bebé 👶" — diseño llamativo'},
+    {n:'Slide 2',tp:'Tip 1','tx':'"Revisa el material: Algodón 100% = ideal. Evita sintéticos en tallas 0-12m" — ícono tela'},
+    {n:'Slide 3',tp:'Tip 2','tx':'"Compra una talla más grande: los bebés crecen rápido — mejor que sobre y no que falte"'},
+    {n:'Slide 4',tp:'Tip 3','tx':'"Cierre seguro: revisa que botones y broches estén bien cosidos antes de comprar"'},
+    {n:'Slide 5',tp:'Tip 4','tx':'"Lavado fácil: busca prendas que no necesiten lavado especial o en seco"'},
+    {n:'Slide 6',tp:'Tip 5','tx':'"Compra en marcas confiables: en Crea Yoyis revisamos TODO antes de venderlo 🐻"'},
+    {n:'Slide 7',tp:'CTA final','tx':'"¿Quieres ver nuestra colección? Cada prenda cumple estos 5 estándares. 📲" + foto dueños'},
+  ],
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 1333 + precio',cta:'Botón WhatsApp'},
+    {tp:'💡 Tip educativo',tx:'"Tip: compra una talla más — los bebés crecen muy rápido"',cta:'Sticker bebé'},
+  ]
+},
+
+'07-17':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Jueves 17 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 12207 · premium + precio',cta:'Botón WhatsApp'},
+    {tp:'📸 BTS',tx:'"Esta semana preparamos pedidos especiales para nuestros clientes — ¡gracias! 🐻"',cta:'Sticker corazón'},
+  ]
+},
+
+'07-18':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Viernes 18 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 12204 · premium + precio',cta:'WhatsApp: "Lo quiero"'},
+    {tp:'📸 Dueños',tx:'"Preparando el cierre del ciclo con mucho amor — ¡gracias por su apoyo! 🐻"',cta:'Sticker corazón'},
+  ]
+},
+
+'07-19':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Sábado 19 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 6161 + precio',cta:'Botón WhatsApp'},
+    {tp:'💡 Tip',tx:'"Este fin de semana es ideal para hacer tu pedido mayorista y recibirlo la próxima semana 💼"',cta:'Botón WP mayorista'},
+  ]
+},
+
+'07-20':{
+  t:'reel',lbl:'Reel #4',bg:'var(--sl)',tc:'var(--sd)',
+  title:'Un día en Crea Yoyis: de la bodega a tu puerta 📦',
+  obj:'Mostrar el proceso completo de un día — humanizar la marca. Dueños aparecen EN CÁMARA en el inicio y cierre, y narran en voz en off los clips de proceso.',
+  style:'🎥 Mezcla de formatos: clips 1 y 5 los dueños aparecen en cámara frontal; clips 2, 3 y 4 son B-roll con voz en off.',
+  caption:`¿Cómo es un día normal en Crea Yoyis? 📦
+
+Desde que revisamos el inventario hasta que tu pedido sale por la puerta — aquí está todo lo que hacemos.
+
+Gracias por confiar en nosotros. Cada pedido lo hacemos con amor. 🐻💕`,
+  hashtags:'#CreaYoyis #DíaEnCreaYoyis #BTS #ProcesoDeEnvío #HumanizandoLaMarca #MarcaColombia #TiendaOnlineColombia',
+  clips:[
+    {t:'cam',tp:'CLIP 1 — Dueño/a cámara frontal',
+     vis:'Inicio del día con buena luz natural. Tono energético y cercano.',
+     quote:'Buenos días. Son las [hora] y esto es lo que vamos a hacer hoy en Crea Yoyis. Quédense hasta el final.'},
+    {t:'voz',tp:'CLIP 2 — 🎙 Voz en off / B-Roll pedidos',
+     vis:'VISUAL: Manos revisando los pedidos del día, anotando en lista o pantalla del teléfono.',
+     quote:'Primero revisamos todos los pedidos. Cada uno tiene su referencia, talla y dirección de envío.'},
+    {t:'voz',tp:'CLIP 3 — 🎙 Voz en off / B-Roll selección',
+     vis:'VISUAL: Selección de prendas en bodega, verificando calidad y comparando con el pedido.',
+     quote:'Revisamos que cada prenda esté perfecta antes de empezar a empacar. Cero errores, cero pedidos mal armados.'},
+    {t:'voz',tp:'CLIP 4 — 🎙 Voz en off / B-Roll empaque',
+     vis:'VISUAL: Empaque cuidadoso, sellado de caja con sticker Crea Yoyis, entrega al mensajero.',
+     quote:'La caja se sella con cariño. Y así, en pocas horas, tu pedido está en camino.'},
+    {t:'cam',tp:'CLIP 5 — Dueño/a cámara + CTA final',
+     vis:'Tono final cálido y sincero, mirada directa a cámara.',
+     quote:'Cada caja que sale de aquí tiene un poco de nosotros. Gracias por elegir Crea Yoyis. 🐻 ¡Escríbenos y únete a nuestra familia de clientes!'},
+  ],
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 12190 + precio',cta:'Botón WhatsApp'},
+    {tp:'📸 BTS Dueños',tx:'"Esta es la última semana de este ciclo — ¡gracias a todos nuestros clientes! 🎉"',cta:'Sticker corazón'},
+    {tp:'💡 Tip final',tx:'"La calidad se nota al primer lavado — y la nuestra la garantizamos. 🐻 Crea Yoyis"',cta:'Sticker 🐻'},
+  ]
+},
+
+'07-21':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Martes 21 de julio',
+  hist:[
+    {tp:'🛍 Producto',tx:'Foto Ref 12207 · premium + precio',cta:'Botón WhatsApp'},
+    {tp:'📸 Proceso',tx:'"Hoy fue un día lleno de pedidos — ¡gracias por confiar en Crea Yoyis! 📦"',cta:'Sticker gracias'},
+    {tp:'💼 Mayorista',tx:'"Últimos cupos de pedido mayorista esta quincena — ¡no te quedes por fuera! 💼"',cta:'Botón WP mayorista'},
+  ]
+},
+
+'07-22':{
+  t:'hist',lbl:'Historias',bg:'var(--bl)',tc:'var(--bd)',
+  title:'Historias — Cierre del ciclo · Miércoles 22 de julio 🐻',
+  hist:[
+    {tp:'📸 Dueños CTA',tx:'"¡Gracias por acompañarnos en este ciclo! Los esperamos en el próximo. Crea Yoyis los quiere mucho. 🐻"',cta:'WP directo + link en bio'},
+  ]
+},
+};
+
+const WEEKS=[
+  ['06-29','06-30','07-01','07-02','07-03','07-04','07-05'],
+  ['07-06','07-07','07-08','07-09','07-10','07-11','07-12'],
+  ['07-13','07-14','07-15','07-16','07-17','07-18','07-19'],
+  ['07-20','07-21','07-22','07-23','07-24','07-25','07-26'],
+];
+
+const MN={'06':'Junio','07':'Julio'};
+const DN=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+function fmt(k){const[m,d]=k.split('-');const dt=new Date(`2026-${m}-${d}T12:00`);return `${DN[dt.getDay()]} ${d} de ${MN[m]} 2026`;}
+
+function buildGrid(){
+  const g=document.getElementById('grid');g.innerHTML='';
+  WEEKS.forEach(wk=>{
+    wk.forEach((key,ci)=>{
+      const c=C[key],sun=ci===6;
+      const div=document.createElement('div');
+      div.className='cell'+(c?' ok':(sun?' rest':' emp'));
+      div.dataset.key=key;
+      const d=key.split('-')[1];
+      let h=`<div class="dn">${d}</div>`;
+      if(c){
+        h+=`<span class="cchip" style="background:${c.bg};color:${c.tc}">${c.lbl}</span>`;
+        if(REC[key])h+=`<span class="rdot" title="Cambio guardado"></span>`;
+        h+=`<div class="ctxt">${c.title}</div>`;
+        div.addEventListener('click',()=>openDet(key));
+      } else if(sun){
+        h+=`<div style="text-align:center;color:var(--text3);margin-top:12px;font-size:13px"><i class="fa-regular fa-moon"></i></div>`;
+      }
+      div.innerHTML=h;
+      g.appendChild(div);
+    });
+  });
+}
+
+function openDet(key){
+  document.querySelectorAll('.cell.active').forEach(x=>x.classList.remove('active'));
+  const cell=document.querySelector(`.cell[data-key="${key}"]`);
+  if(cell)cell.classList.add('active');
+  cur=key;
+  const c=C[key];
+
+  document.getElementById('dh-chip').innerHTML=`<span class="cchip" style="background:${c.bg};color:${c.tc}">${c.lbl}</span>`;
+  document.getElementById('dh-title').textContent=c.title;
+  document.getElementById('dh-date').textContent=fmt(key);
+
+  let b='';
+
+  if(c.obj){
+    b+=`<div class="sl"><i class="fa-solid fa-bullseye"></i> Objetivo del contenido</div>
+    <div class="obj-box">${c.obj}${c.style?`<div class="obj-style"><i class="fa-solid fa-circle-info"></i> <span>${c.style}</span></div>`:''}</div>`;
+  }
+
+  if(c.caption){
+    b+=`<div class="sl"><i class="fa-solid fa-align-left"></i> Caption para publicar</div>
+    <div class="caption-box" id="cap-${key}">
+      <button class="copy-btn" onclick="copyCap('${key}')"><i class="fa-solid fa-copy"></i> Copiar</button>
+      ${escH(c.caption)}
+      <div class="hashtags">${c.hashtags}</div>
+    </div>`;
+  }
+
+  if(c.clips){
+    b+=`<div class="sl"><i class="fa-solid fa-clapperboard"></i> Guión de grabación — clip a clip</div>`;
+    c.clips.forEach((cl)=>{
+      const ncls=cl.t==='cam'?'clip-cam':cl.t==='voz'?'clip-voz':'clip-broll';
+      const icon=cl.t==='cam'?'fa-camera':cl.t==='voz'?'fa-microphone':'fa-film';
+      b+=`<div class="clip">
+        <div class="clip-n ${ncls}"><i class="fa-solid ${icon}" style="font-size:10px"></i></div>
+        <div class="clip-body">
+          <div class="clip-tp">${cl.tp}</div>
+          <div class="clip-vis-lbl">📷 Visual / Lo que graba la cámara:</div>
+          <div class="clip-vis">${escH(cl.vis)}</div>
+          ${cl.quote?`<div class="clip-quote-lbl">🎙 Lo que dice el dueño/a:</div><div class="clip-quote">${escH(cl.quote)}</div>`:''}
+        </div>
+      </div>`;
+    });
+  }
+
+  if(c.slides){
+    b+=`<div class="sl"><i class="fa-solid fa-layer-group"></i> Diapositivas del carrusel</div>`;
+    c.slides.forEach(s=>{
+      b+=`<div class="slide"><span class="slide-n">${s.n}</span><span class="slide-tp">${s.tp}</span><span class="slide-tx">${escH(s.tx)}</span></div>`;
+    });
+  }
+
+  if(c.hist&&c.hist.length){
+    b+=`<div class="sl"><i class="fa-solid fa-clock"></i> Historias del día</div>`;
+    c.hist.forEach(h=>{
+      b+=`<div class="hist"><div class="hist-tp">${h.tp}</div><div class="hist-tx">${escH(h.tx)}</div><div class="hist-cta"><i class="fa-solid fa-arrow-right" style="font-size:9px"></i> CTA: ${escH(h.cta)}</div></div>`;
+    });
+  }
+
+  document.getElementById('db').innerHTML=b;
+  document.getElementById('rta').value=REC[key]||'';
+  document.getElementById('ph').style.display='none';
+  document.getElementById('det-main').classList.add('show');
+  document.getElementById('det-side').classList.add('open');
+  document.getElementById('det-main').scrollTop=0;
+}
+
+function escH(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+
+function closeDet(){
+  document.querySelectorAll('.cell.active').forEach(x=>x.classList.remove('active'));
+  document.getElementById('ph').style.display='flex';
+  document.getElementById('det-main').classList.remove('show');
+  document.getElementById('det-side').classList.remove('open');
+  cur=null;
+}
+
+function copyCap(key){
+  const c=C[key];if(!c||!c.caption)return;
+  navigator.clipboard.writeText(c.caption+'\n\n'+c.hashtags).then(()=>{
+    const btn=document.querySelector(`#cap-${key} .copy-btn`);
+    if(btn){btn.innerHTML='<i class="fa-solid fa-check"></i> Copiado';setTimeout(()=>{btn.innerHTML='<i class="fa-solid fa-copy"></i> Copiar';},2000);}
+  });
+}
+
+function saveRec(){
+  if(!cur)return;
+  const txt=document.getElementById('rta').value.trim();
+  if(txt)REC[cur]=txt;else delete REC[cur];
+  const cnt=Object.keys(REC).length;
+  document.getElementById('rc').textContent=cnt;
+  document.getElementById('gbtn').disabled=cnt===0;
+  buildGrid();
+  document.querySelector(`.cell[data-key="${cur}"]`)?.classList.add('active');
+  const btn=document.getElementById('sbtn');
+  btn.innerHTML='<i class="fa-solid fa-check"></i> Guardado!';
+  btn.style.background='var(--gd)';
+  setTimeout(()=>{btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.style.background='var(--salmon)';},2000);
+}
+
+function openModal(){
+  const entries=Object.entries(REC);if(!entries.length)return;
+  let html='';
+  entries.forEach(([k,r])=>{
+    const c=C[k];
+    html+=`<div class="ch-item"><div class="ch-date">${fmt(k)} — ${c?c.lbl:'Historias'}</div><div class="ch-txt">${escH(r)}</div></div>`;
+  });
+  document.getElementById('mch').innerHTML=html;
+  document.getElementById('mbg').classList.add('open');
+}
+function closeModal(){document.getElementById('mbg').classList.remove('open');}
+function copyAll(){
+  const entries=Object.entries(REC);
+  let txt='Aplica los siguientes cambios al plan de contenido de Crea Yoyis:\n\n';
+  entries.forEach(([k,r])=>{txt+=`📅 ${fmt(k)} — ${C[k]?C[k].lbl:'Historias'}\nCambio solicitado: "${r}"\n\n`;});
+  txt+='Por favor actualiza el documento y el Planner con estos cambios.';
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn=document.getElementById('cpbtn');
+    btn.innerHTML='<i class="fa-solid fa-check"></i> ¡Copiado!';
+    setTimeout(()=>{btn.innerHTML='<i class="fa-solid fa-copy"></i> Copiar todo';},2000);
+  });
+}
+
+buildGrid();
+</script>
+</body>
+</html>
